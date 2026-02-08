@@ -1,0 +1,25 @@
+gpio:
+  ports:
+    GPIOA: { base_addr: 0x40020000, pins: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] }
+    GPIOB: { base_addr: 0x40020400, pins: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] }
+    GPIOC: { base_addr: 0x40020800, pins: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] }
+
+  registers:
+    MODER:   { offset: 0x00, bits_per_pin: 2 }
+    OTYPER:  { offset: 0x04, bits_per_pin: 1 }
+    OSPEEDR: { offset: 0x08, bits_per_pin: 2 }
+    PUPDR:   { offset: 0x0C, bits_per_pin: 2 }
+    IDR:     { offset: 0x10, bits_per_pin: 1, access: read-only }
+    ODR:     { offset: 0x14, bits_per_pin: 1 }
+
+  exti:
+    base_addr: 0x40013C00
+    registers:
+      IMR:  0x00
+      RTSR: 0x08
+      FTSR: 0x0C
+      PR:   0x14
+
+  syscfg:
+    base_addr: 0x40013800
+    exticr_offsets: [0x08, 0x0C, 0x10, 0x14]

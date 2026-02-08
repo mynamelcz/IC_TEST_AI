@@ -1,0 +1,104 @@
+pin_pairs:
+  # GPIOA pins (excluding JTAG pins)
+  - mcu_a: {port: GPIOA, pin: 0}
+    mcu_b: {port: GPIOA, pin: 0}
+  - mcu_a: {port: GPIOA, pin: 1}
+    mcu_b: {port: GPIOA, pin: 1}
+  - mcu_a: {port: GPIOA, pin: 2}
+    mcu_b: {port: GPIOA, pin: 2}
+  - mcu_a: {port: GPIOA, pin: 3}
+    mcu_b: {port: GPIOA, pin: 3}
+  - mcu_a: {port: GPIOA, pin: 4}
+    mcu_b: {port: GPIOA, pin: 4}
+  - mcu_a: {port: GPIOA, pin: 5}
+    mcu_b: {port: GPIOA, pin: 5}
+  - mcu_a: {port: GPIOA, pin: 6}
+    mcu_b: {port: GPIOA, pin: 6}
+  - mcu_a: {port: GPIOA, pin: 7}
+    mcu_b: {port: GPIOA, pin: 7}
+  - mcu_a: {port: GPIOA, pin: 8}
+    mcu_b: {port: GPIOA, pin: 8}
+  - mcu_a: {port: GPIOA, pin: 9}
+    mcu_b: {port: GPIOA, pin: 9}
+  - mcu_a: {port: GPIOA, pin: 10}
+    mcu_b: {port: GPIOA, pin: 10}
+  - mcu_a: {port: GPIOA, pin: 11}
+    mcu_b: {port: GPIOA, pin: 11}
+  - mcu_a: {port: GPIOA, pin: 12}
+    mcu_b: {port: GPIOA, pin: 12}
+  - mcu_a: {port: GPIOA, pin: 15}
+    mcu_b: {port: GPIOA, pin: 15}
+
+  # GPIOB pins (excluding JTAG pins)
+  - mcu_a: {port: GPIOB, pin: 0}
+    mcu_b: {port: GPIOB, pin: 0}
+  - mcu_a: {port: GPIOB, pin: 1}
+    mcu_b: {port: GPIOB, pin: 1}
+  - mcu_a: {port: GPIOB, pin: 2}
+    mcu_b: {port: GPIOB, pin: 2}
+  - mcu_a: {port: GPIOB, pin: 5}
+    mcu_b: {port: GPIOB, pin: 5}
+  - mcu_a: {port: GPIOB, pin: 6}
+    mcu_b: {port: GPIOB, pin: 6}
+  - mcu_a: {port: GPIOB, pin: 7}
+    mcu_b: {port: GPIOB, pin: 7}
+  - mcu_a: {port: GPIOB, pin: 8}
+    mcu_b: {port: GPIOB, pin: 8}
+  - mcu_a: {port: GPIOB, pin: 9}
+    mcu_b: {port: GPIOB, pin: 9}
+  - mcu_a: {port: GPIOB, pin: 10}
+    mcu_b: {port: GPIOB, pin: 10}
+  - mcu_a: {port: GPIOB, pin: 11}
+    mcu_b: {port: GPIOB, pin: 11}
+  - mcu_a: {port: GPIOB, pin: 12}
+    mcu_b: {port: GPIOB, pin: 12}
+  - mcu_a: {port: GPIOB, pin: 13}
+    mcu_b: {port: GPIOB, pin: 13}
+  - mcu_a: {port: GPIOB, pin: 14}
+    mcu_b: {port: GPIOB, pin: 14}
+  - mcu_a: {port: GPIOB, pin: 15}
+    mcu_b: {port: GPIOB, pin: 15}
+
+  # GPIOC pins
+  - mcu_a: {port: GPIOC, pin: 0}
+    mcu_b: {port: GPIOC, pin: 0}
+  - mcu_a: {port: GPIOC, pin: 1}
+    mcu_b: {port: GPIOC, pin: 1}
+  - mcu_a: {port: GPIOC, pin: 2}
+    mcu_b: {port: GPIOC, pin: 2}
+  - mcu_a: {port: GPIOC, pin: 3}
+    mcu_b: {port: GPIOC, pin: 3}
+  - mcu_a: {port: GPIOC, pin: 4}
+    mcu_b: {port: GPIOC, pin: 4}
+  - mcu_a: {port: GPIOC, pin: 5}
+    mcu_b: {port: GPIOC, pin: 5}
+  - mcu_a: {port: GPIOC, pin: 6}
+    mcu_b: {port: GPIOC, pin: 6}
+  - mcu_a: {port: GPIOC, pin: 7}
+    mcu_b: {port: GPIOC, pin: 7}
+  - mcu_a: {port: GPIOC, pin: 8}
+    mcu_b: {port: GPIOC, pin: 8}
+  - mcu_a: {port: GPIOC, pin: 9}
+    mcu_b: {port: GPIOC, pin: 9}
+  - mcu_a: {port: GPIOC, pin: 10}
+    mcu_b: {port: GPIOC, pin: 10}
+  - mcu_a: {port: GPIOC, pin: 11}
+    mcu_b: {port: GPIOC, pin: 11}
+  - mcu_a: {port: GPIOC, pin: 12}
+    mcu_b: {port: GPIOC, pin: 12}
+  - mcu_a: {port: GPIOC, pin: 13}
+    mcu_b: {port: GPIOC, pin: 13}
+  - mcu_a: {port: GPIOC, pin: 14}
+    mcu_b: {port: GPIOC, pin: 14}
+  - mcu_a: {port: GPIOC, pin: 15}
+    mcu_b: {port: GPIOC, pin: 15}
+
+excluded_pins:
+  - {port: GPIOA, pin: 13}  # JTAG TMS
+  - {port: GPIOA, pin: 14}  # JTAG TCK
+  - {port: GPIOB, pin: 3}   # JTAG TDO
+  - {port: GPIOB, pin: 4}   # JTAG TDI
+
+jtag:
+  mcu_a: "FT232H-A"
+  mcu_b: "FT232H-B"
