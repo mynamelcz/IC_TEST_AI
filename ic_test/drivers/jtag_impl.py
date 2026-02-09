@@ -57,6 +57,7 @@ _OTYPER_OFFSET = 0x04
 _PUPDR_OFFSET = 0x0C
 _IDR_OFFSET = 0x10
 _ODR_OFFSET = 0x14
+_BSRR_OFFSET = 0x18
 
 # EXTI register offsets (relative to EXTI base)
 _EXTI_BASE = 0x40013C00
@@ -189,9 +190,14 @@ class MockJtagImpl(ChipInterface):
 
     def reg_read(self, addr: int) -> int:
         port_base = self._port_base_of(addr)
-        # IDR is computed dynamically
-        if port_base is not None and (addr - port_base) == _IDR_OFFSET:
-            return self._compute_idr(port_base)
+        if port_base is not None:
+            offset = addr - port_base
+            # IDR is computed dynamically
+            if offset == _IDR_OFFSET:
+                return self._compute_idr(port_base)
+            # BSRR is write-only, always reads as 0
+            if offset == _BSRR_OFFSET:
+                return 0
         return self._regs[addr] & 0xFFFFFFFF
 
     def reg_write(self, addr: int, value: int) -> None:
@@ -201,6 +207,17 @@ class MockJtagImpl(ChipInterface):
         # EXTI PR is write-1-to-clear
         if addr == _EXTI_BASE + _EXTI_PR:
             self._regs[addr] &= ~value
+            return
+
+        # BSRR write: atomic set/reset of ODR bits
+        if port_base is not None and (addr - port_base) == _BSRR_OFFSET:
+            odr_addr = port_base + _ODR_OFFSET
+            old_odr = self._regs[odr_addr]
+            bs = value & 0xFFFF          # BS[15:0] set bits
+            br = (value >> 16) & 0xFFFF  # BR[31:16] reset bits
+            new_odr = (old_odr | bs) & ~br
+            self._regs[odr_addr] = new_odr
+            self._update_exti_on_odr_change(port_base, old_odr, new_odr)
             return
 
         # ODR write: trigger EXTI edge detection on peer

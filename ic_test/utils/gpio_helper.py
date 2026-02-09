@@ -20,6 +20,12 @@ class GpioHelper:
     PULL_UP = 1
     PULL_DOWN = 2
 
+    # Output speed (OSPEEDR)
+    SPEED_LOW = 0
+    SPEED_MEDIUM = 1
+    SPEED_HIGH = 2
+    SPEED_VERY_HIGH = 3
+
     def __init__(self, chip: ChipInterface, reg_map: GpioRegMap):
         self.chip = chip
         self.reg_map = reg_map
@@ -89,3 +95,36 @@ class GpioHelper:
             raise ValueError("EXTI not defined in register map")
         pr_addr = exti.base_addr + exti.pr_offset
         self.chip.reg_write(pr_addr, 1 << pin)
+
+    def bsrr_set(self, port: str, pin: int) -> None:
+        """Atomic set pin HIGH via BSRR register (BS[pin])."""
+        addr = self.reg_map.get_reg_addr(port, "BSRR")
+        self.chip.reg_write(addr, 1 << pin)
+
+    def bsrr_reset(self, port: str, pin: int) -> None:
+        """Atomic reset pin LOW via BSRR register (BR[pin+16])."""
+        addr = self.reg_map.get_reg_addr(port, "BSRR")
+        self.chip.reg_write(addr, 1 << (pin + 16))
+
+    def set_speed(self, port: str, pin: int, speed: int) -> None:
+        """Set output speed (OSPEEDR register)."""
+        addr = self.reg_map.get_reg_addr(port, "OSPEEDR")
+        self.chip.reg_write_field(addr, pin * 2, 2, speed)
+
+    def read_speed(self, port: str, pin: int) -> int:
+        """Read output speed (OSPEEDR register)."""
+        addr = self.reg_map.get_reg_addr(port, "OSPEEDR")
+        return self.chip.reg_read_field(addr, pin * 2, 2)
+
+    def read_odr(self, port: str, pin: int) -> int:
+        """Read ODR latch bit for a pin."""
+        addr = self.reg_map.get_reg_addr(port, "ODR")
+        return self.chip.reg_read_field(addr, pin, 1)
+
+    def disable_exti(self, port: str, pin: int) -> None:
+        """Disable EXTI interrupt by clearing IMR bit."""
+        exti = self.reg_map.exti
+        if exti is None:
+            raise ValueError("EXTI not defined in register map")
+        imr_addr = exti.base_addr + exti.imr_offset
+        self.chip.reg_write_field(imr_addr, pin, 1, 0)

@@ -27,6 +27,7 @@
 |---------|--------|------|
 | `gpio_a` | session | MCU-A 的 `GpioHelper` 实例 |
 | `gpio_b` | session | MCU-B 的 `GpioHelper` 实例 |
+| `pin_pair` | function | 由 `pytest_generate_tests` 自动参数化的单个引脚对（共 44 个） |
 | `all_pin_pairs` | session | 从 `pin_map.yaml` 加载的全部引脚对列表 |
 
 ### 辅助函数
@@ -41,7 +42,7 @@
 
 | 模块 | 说明 |
 |------|------|
-| `GpioHelper`（`utils/gpio_helper.py`） | 封装 GPIO 寄存器操作的高层接口，提供 9 个方法和 7 个常量 |
+| `GpioHelper`（`utils/gpio_helper.py`） | 封装 GPIO 寄存器操作的高层接口，提供 15 个方法和 11 个常量 |
 
 `GpioHelper` 常量：
 
@@ -56,6 +57,10 @@
 | `PULL_NONE` | 0 | 无上下拉 |
 | `PULL_UP` | 1 | 上拉 |
 | `PULL_DOWN` | 2 | 下拉 |
+| `SPEED_LOW` | 0 | 低速 |
+| `SPEED_MEDIUM` | 1 | 中速 |
+| `SPEED_HIGH` | 2 | 高速 |
+| `SPEED_VERY_HIGH` | 3 | 极高速 |
 
 `GpioHelper` 方法：
 
@@ -70,6 +75,12 @@
 | `configure_exti(port, pin, rising, falling)` | 配置 EXTI 中断边沿 |
 | `read_exti_pending(pin)` | 读取 EXTI 挂起标志 |
 | `clear_exti_pending(pin)` | 清除 EXTI 挂起标志（写 1 清除） |
+| `bsrr_set(port, pin)` | 通过 BSRR 寄存器原子置位引脚 |
+| `bsrr_reset(port, pin)` | 通过 BSRR 寄存器原子复位引脚 |
+| `set_speed(port, pin, speed)` | 设置输出速度（OSPEEDR 寄存器） |
+| `read_speed(port, pin)` | 读取输出速度（OSPEEDR 寄存器） |
+| `read_odr(port, pin)` | 读取 ODR 锁存位 |
+| `disable_exti(port, pin)` | 清除 IMR 位禁用 EXTI 中断 |
 
 ---
 
@@ -104,16 +115,17 @@ ROLES = [
 - `A_stim-B_dut`：MCU-A 作为激励端，MCU-B 作为被测端
 - `B_stim-A_dut`：MCU-B 作为激励端，MCU-A 作为被测端
 
-### 引脚遍历
+### 引脚参数化
 
-每个测试函数内部通过 `for pp in all_pin_pairs` 遍历全部 44 对引脚。因此：
+每个测试函数通过 `conftest.py` 中的 `pytest_generate_tests` hook 自动参数化 `pin_pair` fixture，将 44 个引脚对展开为独立的测试项，ID 格式如 `A0`, `B5`, `C15`。
 
-- 每个测试函数 = 2 个 role × 44 对引脚 = **88 次引脚级验证**
-- 10 个测试函数合计 = **880 次引脚级验证**
+- G-01~G-12, G-14~G-16: 每个测试函数 = 2 role × 44 pin = **88 个独立测试项**
+- G-13 (OSPEEDR): 2 role × 4 speed × 44 pin = **352 个独立测试项**
+- 16 个测试函数合计 = **1672 个独立测试项**
 
 ---
 
-## 5. 测试项清单（G-01 ~ G-10）
+## 5. 测试项清单（G-01 ~ G-16）
 
 | 编号 | 函数名 | 测试内容 | 激励端动作 | 被测端动作 | 判定标准 |
 |------|--------|---------|-----------|-----------|---------|
@@ -127,6 +139,12 @@ ROLES = [
 | G-08 | `test_rising_edge_interrupt` | 上升沿中断 | 设为输出、先写 0 再写 1 | 设为输入、配置 EXTI 上升沿 | EXTI 挂起标志为 True |
 | G-09 | `test_falling_edge_interrupt` | 下降沿中断 | 设为输出、先写 1 再写 0 | 设为输入、配置 EXTI 下降沿 | EXTI 挂起标志为 True |
 | G-10 | `test_both_edge_interrupt` | 双沿中断 | 设为输出、0→1→0 | 设为输入、配置 EXTI 双沿 | 上升沿和下降沿挂起标志均为 True |
+| G-11 | `test_bsrr_set` | BSRR 原子置位 | 设为输入、无上下拉 | 设为输出、通过 BSRR 置 HIGH | 激励端读到 1 |
+| G-12 | `test_bsrr_reset` | BSRR 原子复位 | 设为输入、无上下拉 | 设为输出、通过 BSRR 复位 LOW | 激励端读到 0 |
+| G-13 | `test_ospeedr_readback` | OSPEEDR 回读 | — | 写入 4 种速度值后回读 | 回读值与写入值一致 |
+| G-14 | `test_odr_readback` | ODR 回读验证 | — | 写 1 回读 1，写 0 回读 0 | ODR 锁存值与写入一致 |
+| G-15 | `test_exti_disabled` | EXTI 禁用验证 | 设为输出、产生上升沿 | 配置 EXTI 后禁用 IMR | pending 不置位 |
+| G-16 | `test_open_drain_pull_down` | 开漏+下拉 | 设为输入、使能下拉 | 设为开漏输出 | 写 0 读到 0；写 1（释放）下拉读到 0 |
 
 ---
 
@@ -267,9 +285,90 @@ ROLES = [
 
 ---
 
+### G-11: test_bsrr_set — BSRR 原子置位验证
+
+**目的**：验证 DUT 通过 BSRR 寄存器的 BS[pin] 位原子置位引脚为 HIGH。
+
+**步骤**：
+1. `reset_pin_pair()` 复位引脚对
+2. 激励端：设为输入模式，无上下拉
+3. 被测端：设为输出模式，先写 0 确保初始低电平
+4. 被测端：通过 `bsrr_set()` 原子置位
+5. 激励端：读取输入电平
+6. 断言读取值 == 1
+
+---
+
+### G-12: test_bsrr_reset — BSRR 原子复位验证
+
+**目的**：验证 DUT 通过 BSRR 寄存器的 BR[pin+16] 位原子复位引脚为 LOW。
+
+**步骤**：
+1. `reset_pin_pair()` 复位引脚对
+2. 激励端：设为输入模式，无上下拉
+3. 被测端：设为输出模式，先写 1 确保初始高电平
+4. 被测端：通过 `bsrr_reset()` 原子复位
+5. 激励端：读取输入电平
+6. 断言读取值 == 0
+
+---
+
+### G-13: test_ospeedr_readback — OSPEEDR 回读验证
+
+**目的**：验证 DUT 的 OSPEEDR 寄存器写入后回读一致，覆盖全部 4 种速度值。
+
+**步骤**：
+1. `reset_pin_pair()` 复位引脚对
+2. 被测端：设为输出模式
+3. 被测端：通过 `set_speed()` 写入速度值（0/1/2/3）
+4. 被测端：通过 `read_speed()` 回读速度值
+5. 断言回读值 == 写入值
+
+---
+
+### G-14: test_odr_readback — ODR 回读验证
+
+**目的**：验证 DUT 的 ODR 寄存器写入后通过 `read_odr()` 回读一致。
+
+**步骤**：
+1. `reset_pin_pair()` 复位引脚对
+2. 被测端：设为输出模式
+3. 被测端：写入 1，通过 `read_odr()` 回读，断言 == 1
+4. 被测端：写入 0，通过 `read_odr()` 回读，断言 == 0
+
+---
+
+### G-15: test_exti_disabled — EXTI 禁用验证
+
+**目的**：验证 DUT 禁用 EXTI（IMR=0）后，边沿事件不会置位 pending 标志。
+
+**步骤**：
+1. `reset_pin_pair()` 复位引脚对
+2. 激励端：设为输出模式，写入低电平 (0)
+3. 被测端：设为输入模式，配置 EXTI 双沿触发，清除挂起标志
+4. 被测端：通过 `disable_exti()` 清除 IMR 位
+5. 激励端：写入高电平 (1)，产生上升沿
+6. 被测端：读取 EXTI 挂起标志
+7. 断言挂起标志为 False
+
+---
+
+### G-16: test_open_drain_pull_down — 开漏+下拉验证
+
+**目的**：验证 DUT 开漏输出模式下，激励端使能下拉电阻时的行为：写 0 拉低线路读到 0，写 1 释放线路由下拉拉低仍读到 0。
+
+**步骤**：
+1. `reset_pin_pair()` 复位引脚对
+2. 激励端：设为输入模式，使能下拉电阻
+3. 被测端：设为输出模式，输出类型设为开漏
+4. 被测端：写入 0 → 激励端读取，断言 == 0（开漏拉低）
+5. 被测端：写入 1 → 激励端读取，断言 == 0（开漏释放，下拉拉低）
+
+---
+
 ## 7. CSV 报告集成
 
-每个测试在每次引脚迭代中通过 `request.node.user_properties.append()` 记录以下字段：
+每个测试通过 `request.node.user_properties.append()` 记录以下字段：
 
 | 字段 | 说明 | 示例值 |
 |------|------|--------|
@@ -280,7 +379,7 @@ ROLES = [
 | `expected` | 期望值 | `1`、`low=0,high=1`、`True`、`rise=True,fall=True` |
 | `actual` | 实际值 | 与 expected 格式对应 |
 
-这些字段可通过自定义 pytest 插件或 `conftest.py` 中的 hook 导出为 CSV 报告，便于批量分析测试结果。
+由于每个引脚对已通过 `pytest_generate_tests` 参数化为独立测试项，`user_properties` 不再存在重复 key 覆盖问题。CSV 报告通过 `--csv-report` 选项启用，由 `conftest.py` 注册的 `CsvReportPlugin` 生成。
 
 ---
 
@@ -292,10 +391,16 @@ ROLES = [
 pytest ic_test/tests/test_gpio.py --use-mock -v
 ```
 
-### 生成 CSV 报告（需配合 CSV 报告插件）
+### 验证测试数量
 
 ```bash
-pytest ic_test/tests/test_gpio.py --use-mock -v --csv=report.csv
+pytest ic_test/tests/test_gpio.py --use-mock --collect-only | tail -1
+```
+
+### 生成 CSV 报告
+
+```bash
+pytest ic_test/tests/test_gpio.py --use-mock --csv-report=gpio_report.csv -v
 ```
 
 ### 指定真实 JTAG 探针
@@ -312,4 +417,7 @@ pytest ic_test/tests/test_gpio.py::test_output_high -v --use-mock
 
 # 仅运行 A_stim-B_dut 方向
 pytest ic_test/tests/test_gpio.py -k "A_stim" -v --use-mock
+
+# 仅运行新增测试（G-11 ~ G-16）
+pytest ic_test/tests/test_gpio.py -k "bsrr or ospeedr or odr_readback or exti_disabled or open_drain_pull_down" --use-mock -v
 ```

@@ -11,6 +11,7 @@ gpio:
     PUPDR:   { offset: 0x0C, bits_per_pin: 2 }
     IDR:     { offset: 0x10, bits_per_pin: 1, access: read-only }
     ODR:     { offset: 0x14, bits_per_pin: 1 }
+    BSRR:    { offset: 0x18, bits_per_pin: 1, access: write-only }
 
   exti:
     base_addr: 0x40013C00

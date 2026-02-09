@@ -43,18 +43,3 @@ class CsvReportPlugin:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(self.results)
-
-
-def pytest_addoption(parser):
-    parser.addoption(
-        "--csv-report",
-        default=None,
-        help="Path to CSV report output file",
-    )
-
-
-def pytest_configure(config):
-    csv_path = config.getoption("--csv-report")
-    if csv_path:
-        plugin = CsvReportPlugin(csv_path)
-        config.pluginmanager.register(plugin, "csv_report")
